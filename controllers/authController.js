@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../models'); // assumes Sequelize models are initialized in /models/index.js
 
@@ -9,13 +9,17 @@ exports.signup = async (req, res) => {
     try {
         const { email, username, password, role } = req.body;
 
+        if (!email || !username || !password || !role) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
         if (!['admin', 'user'].includes(role)) {
             return res.status(400).json({ error: 'Invalid role specified' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await db.user.create({
+        const user = await db.User.create({
             email,
             username,
             password: hashedPassword,
@@ -34,7 +38,15 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const user = await db.user.findOne({ where: { username } });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+
+        if (!JWT_SECRET) {
+            throw new Error('JWT_SECRET is not defined');
+        }
+
+        const user = await db.User.findOne({ where: { username } });
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -47,7 +59,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 role: user.role,
             },

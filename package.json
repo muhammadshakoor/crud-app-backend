@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "insert": "node scripts/insert-products.js",
     "test-json": "node scripts/test-json.js"
   },

@@ -6,7 +6,7 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.user = require('./user.model')(sequelize, Sequelize.DataTypes);
+db.User = require('./user.model')(sequelize, Sequelize.DataTypes);
 db.products = require('./product.model')(sequelize, Sequelize.DataTypes);
 
 module.exports = db;
