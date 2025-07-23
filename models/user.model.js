@@ -15,6 +15,9 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.ENUM('admin', 'user'),
             defaultValue: 'user',
         },
+    }, {
+        timestamps: true,
+        underscored: true
     });
     return User;
 }
