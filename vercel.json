@@ -2,7 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js"
+      "src": "server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -17,5 +18,7 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build"
 }
