@@ -27,6 +27,8 @@ db.sequelize.sync({ alter: true }) // Allow schema updates during development
     })
     .catch(err => console.error('Database sync error:', err));
 
+module.exports = app;
+
 // db.sequelize.sync().then(() => {
 //     app.listen(PORT, () => {
 //         console.log(`Server running on port ${PORT}`);
