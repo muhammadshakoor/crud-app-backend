@@ -5,7 +5,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "insert": "node scripts/insert-products.js",
-    "test-json": "node scripts/test-json.js"
+    "test-json": "node scripts/test-json.js",
+    "build": "npm install --production && node -e \"require('pg-native')\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
