@@ -8,8 +8,8 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-const productRoutes = require('../routes/products.js');
-const authRoutes = require('../routes/auth.js');
+// const productRoutes = require('../routes/products.js');
+// const authRoutes = require('../routes/auth.js');
 
 app.get('/', (req, res) => {
     res.send('API is running on Vercel!');
