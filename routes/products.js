@@ -33,17 +33,31 @@ router.get('/get/products', authenticate, authorize(['admin', 'user']), async (r
             where,
             offset,
             limit: limitNum,
-            order: [['createdAt', 'DESC']], // optional: newest first
+            order: [['createdAt', 'DESC']],
         });
 
         const totalPages = Math.ceil(count / limitNum);
 
+        // Fetch all unique filter options separately
+        const allCategories = await db.products.findAll({
+            attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('category')), 'category']],
+            where: {},
+        });
+        const allBrands = await db.products.findAll({
+            attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('brand')), 'brand']],
+            where: {},
+        });
+        const allSuppliers = await db.products.findAll({
+            attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('supplier')), 'supplier']],
+            where: {},
+        });
+
         res.json({
             products,
             totalPages,
-            categories: [...new Set(products.map(p => p.category).filter(Boolean))],
-            brands: [...new Set(products.map(p => p.brand).filter(Boolean))],
-            suppliers: [...new Set(products.map(p => p.supplier).filter(Boolean))],
+            categories: allCategories.map(p => p.category).filter(Boolean),
+            brands: allBrands.map(p => p.brand).filter(Boolean),
+            suppliers: allSuppliers.map(p => p.supplier).filter(Boolean),
         });
     } catch (error) {
         console.error(error);
@@ -51,19 +65,37 @@ router.get('/get/products', authenticate, authorize(['admin', 'user']), async (r
     }
 });
 
-// GET all products without pagination (for exporting)
+// GET all products with optional filtering (no pagination)
 router.get('/get/all-products', authenticate, authorize(['admin', 'user']), async (req, res) => {
     try {
+        const {
+            name,
+            category,
+            min_price,
+            min_stock,
+            brand,
+            supplier,
+        } = req.query;
+
+        const where = {};
+        if (name) where.name = { [Op.iLike]: `%${name}%` };
+        if (category) where.category = category;
+        if (brand) where.brand = { [Op.iLike]: `%${brand}%` };
+        if (supplier) where.supplier = supplier;
+        if (min_price) where.sale_price = { [Op.gte]: parseFloat(min_price) };
+        if (min_stock) where.min_stock_level = { [Op.gte]: parseInt(min_stock, 10) };
+
         const products = await db.products.findAll({
-            order: [['createdAt', 'DESC']]
+            where,
+            order: [['createdAt', 'DESC']],
         });
+
         res.json(products);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch all products' });
     }
 });
-
 
 // Generate barcode function
 const generateBarcode = () => {
@@ -73,14 +105,12 @@ const generateBarcode = () => {
 // POST /api/products
 router.post('/add/products', authenticate, authorize(['admin']), async (req, res) => {
     try {
-        // Auto barcode generate
         const data = req.body;
 
         if (!data.barcode) {
-            data.barcode = generateBarcode(); // generate a random barcode if not provided
+            data.barcode = generateBarcode();
         }
-        // ... (rest of the code remains the same)
-        const product = await db.products.create(req.body);
+        const product = await db.products.create(data);
         res.status(201).json(product);
     } catch (error) {
         console.error(error);
@@ -101,7 +131,6 @@ router.put('/update/products/:id', authenticate, authorize(['admin']), async (re
         res.status(500).json({ error: 'Failed to update product' });
     }
 });
-
 
 // Delete a product
 router.delete('/delete/products/:id', authenticate, authorize(['admin']), async (req, res) => {
@@ -126,13 +155,11 @@ router.post('/bulk-create/products', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid format' });
         }
 
-        // Auto barcode generate
         const withBarcodes = products.map(product => ({
             ...product,
             barcode: product.barcode || generateBarcode(),
         }));
 
-        // await db.products.bulkCreate(products);
         await db.products.bulkCreate(withBarcodes);
         res.status(201).json({ message: 'Products created successfully' });
     } catch (err) {
@@ -140,7 +167,6 @@ router.post('/bulk-create/products', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Bulk creation failed' });
     }
 });
-
 
 module.exports = router;
 
